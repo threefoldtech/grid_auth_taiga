@@ -31,7 +31,7 @@ class ThreeFoldApiError(ConnectorBaseException):
 
 APP_SECRET = getattr(settings, "THREEFOLD_API_APP_SECRET", None)
 URL = getattr(settings, "THREEFOLD_URL", "https://login.threefold.me")
-OPENKYC_URL = getattr(settings, "THREEFOLD_OPENKYC_URL", "https://openkyc.live/verification/verify-sei") 
+OPENKYC_URL = getattr(settings, "THREEFOLD_OPENKYC_URL", "https://openkyc.threefold.me/verification/verify-sei") 
 
 
 HEADERS = {"Content-Type": "application/json"}

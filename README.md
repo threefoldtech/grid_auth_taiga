@@ -105,7 +105,7 @@ other optionals environmental settings to override when needed
 
 ```bash
 THREEFOLD_URL : "https://login.threefold.me"  # optional. can be used to override the default url
-THREEFOLD_OPENKYC_URL: "https://openkyc.live/verification/verify-sei"  # optional. can be used to override the default url
+THREEFOLD_OPENKYC_URL: "https://openkyc.threefold.me/verification/verify-sei"  # optional. can be used to override the default url
 THREEFOLD_APP_ID: "<YOUR-HOST-NAME>" # optional as plugin will detect the hostname. can be used to override the default url if needed
 ```
 
@@ -191,7 +191,7 @@ Modify your `settings/config.py` and include the line:
 
   THREEFOLD_API_APP_SECRET = "YOUR-THREEFOLD-APP-SECRET"  # required
   THREEFOLD_URL = "https://login.threefold.me"  # optional. can be used to override the default url
-  THREEFOLD_OPENKYC_URL ="https://openkyc.live/verification/verify-sei"  # optional. can be used to override the default url
+  THREEFOLD_OPENKYC_URL ="https://openkyc.threefold.me/verification/verify-sei"  # optional. can be used to override the default url
 ```
 
 To get the THREEFOLD_API_APP_SECRET do:
@@ -254,7 +254,7 @@ Modify `taiga-back/settings/local.py` and include the line:
 
   THREEFOLD_API_APP_SECRET = "YOUR-THREEFOLD-APP-SECRET"  # required
   THREEFOLD_URL = "https://login.threefold.me"  # optional. can be used to override the default url
-  THREEFOLD_OPENKYC_URL ="https://openkyc.live/verification/verify-sei"  # optional. can be used to override the default url
+  THREEFOLD_OPENKYC_URL ="https://openkyc.threefold.me/verification/verify-sei"  # optional. can be used to override the default url
 ```
 
 To get the THREEFOLD_API_APP_SECRET do:

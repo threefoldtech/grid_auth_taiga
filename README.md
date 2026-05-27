@@ -1,333 +1,202 @@
-# Taiga Contrib Threefold Auth
+# Taiga Contrib ThreeFold Auth
 
-A Taiga plugin that enables ThreeFold authentication, ported from the official GitLab auth plugin. It allows users to log in to Taiga using their ThreeFold identity.
+This repository contains an authentication plugin for the [Taiga](https://taiga.io) project management platform that enables single sign-on through a blockchain-based identity system. It is ported from the official GitLab auth plugin and adapted for decentralized authentication flows.
 
-to install it, you can use one of three ways:
-- Using taiga helm chart
-- Using Docker and Docker-compose
-- Using manual installation
+## What this is
 
-# 1- Taiga Helm Chart Setup
+The plugin allows users to authenticate to Taiga using a decentralized identity instead of separate Taiga credentials. It consists of a Python backend module (Django/Taiga back) and a JavaScript frontend module (Taiga front) that together handle the OAuth-like authentication flow, identity verification, and user provisioning inside Taiga.
 
-## Installing Taiga chart
+## What this repository contains
 
--   Adding the repo to your helm 
+- **Backend plugin** (`back/`) — Python package integrating with Taiga's Django backend to handle authentication callbacks, token verification, and user creation
+- **Frontend plugin** (`front/`) — JavaScript module adding the SSO login button and handling the frontend authentication flow
+- **Docker images** — `threefolddev/taiga-front-threefold` and `threefolddev/taiga-back-threefold` images for easy deployment
+- **Helm chart integration** — Configuration for installing Taiga with the plugin via Helm
+- **Manual installation instructions** for production and development environments
 
-    ```bash
-    helm repo add marketplace https://threefoldtech.github.io/vdc-solutions-charts/
-    ```
--   install a chart 
+## Role in the stack
 
-    ```bash
-    helm install marketplace/taiga
-    ```
-    
-## installing the chart with different parameters
--   install a chart 
-    
-    ```bash
-    helm install test-helm-charts/taiga --set ingress.host=domain --set threefoldlogin.apiAppSecret=login-api-secret-key --set threefoldlogin.apiAppPublicKey=login-api-public-key --set backendSecretKey=secret --set global.ingress.certresolver=gridca
-    ```
--   `backendSecretKey`:
-    A secret key for a particular Django installation. This is used to provide cryptographic signing, and should be set to a unique, unpredictable value.
-    
-    you can generate one using something like this:
-    ```
-    TAIGA_SECRET_KEY=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-64};echo;`
-    ```
--   `threefoldlogin.apiAppSecret` and `threefoldlogin.apiAppPublicKey `:
-    there are default working values in the values.yaml but you should generate new pairs as those should be set to a unique, unpredictable values.
-    To get the `threefoldlogin.apiAppSecret` and `threefoldlogin.apiAppPublicKey ` do:
+This plugin bridges the Taiga project management application with the decentralized identity layer. It enables teams within the ecosystem to use a single identity for both infrastructure access and project collaboration. It fits into the broader management and collaboration layer of the stack.
 
-    ```python
-    import nacl
-    import nacl.signing
-    sk = nacl.signing.SigningKey.generate()
-    sk_to_b64 = sk.encode(encoder=nacl.encoding.Base64Encoder).decode()  # this is the signing key. use it for threefoldlogin.apiAppSecret setting.
+## Relation to ThreeFold
 
-    vk = sk.verify_key
-    pubkey = vk.to_curve25519_public_key().encode(encoder=nacl.encoding.Base64Encoder).decode()  # this is the app public key. you will need it for the front end `threefoldlogin.apiAppPublicKey` setting.
-    ```
+This technology is used within the ThreeFold ecosystem and was first deployed on the ThreeFold Grid. The component itself is designed as reusable infrastructure technology and should be understood by its technical function first, independent of any specific deployment.
 
--   `emailSettings`
-    By default, email is configured with the console backend, which means that the emails will be shown in the stdout. If you have an smtp service, make sure to update these values:
+## Ownership
 
-     - emailSettings.emailEnabled: true
-     - emailSettings.emailFrom: taiga@mycompany.net
-     - emailSettings.emailUseTls: "True"
-     - emailSettings.emailUseSsl: "False"
-     - emailSettings.emailSmtpHost: smtp.gmail.com
-     - emailSettings.emailSmtpPort: 587
-     - emailSettings.emailSmtpUser: user@gmail.com
-     - emailSettings.emailSmtpPassword: your-password
+This repository is owned and maintained by TF-Tech NV, a Belgian company responsible for the development and maintenance of this technology.
 
-    note : You cannot use both (TLS and SSL) at the same time!
+## Installation
 
-# 2- Docker Setup
-Taiga up and running with integrated threefold authentication in a simple two steps, using docker and docker-compose.
+You can install the plugin using one of three methods:
 
-Compatible with Taiga 4.2.1, 5.x, 6
-## Docker
-This plugin is compatible with the official taiga docker images 😃
+- Using the Taiga Helm chart
+- Using Docker and Docker Compose
+- Manual installation
 
-https://github.com/taigaio/taiga-docker
+### 1. Taiga Helm Chart Setup
 
-This project builds 2 images based off the images provided by taiga. This should allow another customizations to continue to work.
-
-The following will show the changes needed to the default docker-compose file to install the threefold plugin.
-
-### Config 
-The 2 images:
- - threefolddev/taiga-front-threefold
- - threefolddev/taiga-back-threefold
-
-Use the following environmental settings to configure
+Add the repo to your Helm:
 
 ```bash
-THREEFOLD_API_APP_SECRET : "<APP SECRET>"
-THREEFOLD_API_APP_PUBLIC_KEY = "<YOUR-THREEFOLD-APP-PUBLIC-KEY>"
+helm repo add marketplace https://threefoldtech.github.io/vdc-solutions-charts/
+helm install marketplace/taiga
 ```
 
-To get the `THREEFOLD_API_APP_SECRET` and `THREEFOLD_API_APP_PUBLIC_KEY` do:
-
-```python
-import nacl
-import nacl.signing
-sk = nacl.signing.SigningKey.generate()
-sk_to_b64 = sk.encode(encoder=nacl.encoding.Base64Encoder).decode()  # this is the signing key. use it for THREEFOLD_API_APP_SECRET setting.
-
-vk = sk.verify_key
-pubkey = vk.to_curve25519_public_key().encode(encoder=nacl.encoding.Base64Encoder).decode()  # this is the app public key. you will need it for the front end `threeFoldAppPubKey` setting.
-
-``` 
-
-other optionals environmental settings to override when needed
+Install with custom parameters:
 
 ```bash
-THREEFOLD_URL : "https://login.threefold.me"  # optional. can be used to override the default url
-THREEFOLD_OPENKYC_URL: "https://openkyc.threefold.me/verification/verify-sei"  # optional. can be used to override the default url
-THREEFOLD_APP_ID: "<YOUR-HOST-NAME>" # optional as plugin will detect the hostname. can be used to override the default url if needed
+helm install test-helm-charts/taiga \
+  --set ingress.host=domain \
+  --set threefoldlogin.apiAppSecret=login-api-secret-key \
+  --set threefoldlogin.apiAppPublicKey=login-api-public-key \
+  --set backendSecretKey=secret \
+  --set global.ingress.certresolver=gridca
 ```
 
-### Docker building
+- `backendSecretKey`: A secret key for Django cryptographic signing. Generate one with:
+  ```
+  TAIGA_SECRET_KEY=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-64};echo;`
+  ```
+- `threefoldlogin.apiAppSecret` and `threefoldlogin.apiAppPublicKey`: Generate a new key pair:
+  ```python
+  import nacl
+  import nacl.signing
+  sk = nacl.signing.SigningKey.generate()
+  sk_to_b64 = sk.encode(encoder=nacl.encoding.Base64Encoder).decode()
+  vk = sk.verify_key
+  pubkey = vk.to_curve25519_public_key().encode(encoder=nacl.encoding.Base64Encoder).decode()
+  ```
+- `emailSettings`: Configure SMTP if needed (see original docs for full settings).
 
-For Docker building for new release make sure that the following files are coppiced into the docker directory
+### 2. Docker Setup
 
-**Backend:**
-Copy https://raw.githubusercontent.com/taigaio/taiga-back/master/docker/config.py
+Compatible with Taiga 4.2.1, 5.x, 6.
 
-**Frontend:**
-copy the config.json and config_env_subst.sh from https://github.com/taigaio/taiga-front/tree/master/docker
+Use the following environment settings:
 
+```bash
+THREEFOLD_API_APP_SECRET="<APP SECRET>"
+THREEFOLD_API_APP_PUBLIC_KEY="<YOUR-APP-PUBLIC-KEY>"
+```
 
-# Building
+Generate the secret and public key as shown above.
 
-The make file contains the basic blocks to locally build the UI and docker containers. 
+Optional overrides:
+
+```bash
+THREEFOLD_URL="https://login.threefold.me"
+THREEFOLD_OPENKYC_URL="https://openkyc.threefold.me/verification/verify-sei"
+THREEFOLD_APP_ID="<YOUR-HOST-NAME>"
+```
+
+Build and run:
 
 ```bash
 make build
-```
-
-you can use `THREEFOLD_TAG` environmental setting to set the tag for the created images before running the below command to build the images. it default to `latest`
-
-you can use `TAIGA_VERSION`environmental setting to set the taiga version, otherwise it will pull the `latest` tag.
-
-for example, to build new `taiga-back-threefold` and `taiga-front-threefold` images with tag `0.0.2` and taiga version set to `6.3.3`
-
-```bash
-export THREEFOLD_TAG=0.0.2
-export TAIGA_VERSION=6.3.3
-make build
-```
-
-other commands available, `make publish` will push the images to `threefolddev` Docker Hub with tag `THREEFOLD_TAG` if set, otherwise `latest`
-
-### Docker-compose file (ported from https://github.com/taigaio/taiga-docker)
-you can run the Docker-compose file to get Taiga with the plugin enabled up and running.
-make sure to set the mandatory env settings `THREEFOLD_API_APP_SECRET`, `THREEFOLD_API_APP_PUBLIC_KEY` in the `docker-compose.yml` file.
-
-- you can create and destroy these environments in just a few commands:
-
-```bash
 docker-compose up -d
 ```
 
-visit `http://127.0.0.1:9000/`
-note: on dev setup you will need to replace `https` with `http` in the browser address bar when the browser redirect back to taiga from the threefold auth server after you login successfully
+Visit `http://127.0.0.1:9000/`.
 
-to destroy the environments:
+To destroy:
 
 ```bash
 docker-compose down
 ```
 
-# 3- Manual Setup
-## Production env
+### 3. Manual Setup
 
-Take the latest release of this repository, for instance:
+#### Taiga Back
 
+Install the package:
+
+```bash
+pip install "git+https://github.com/sameh-farouk/taiga-contrib-threefold-auth.git@${TAIGA_CONTRIB_THREEFOLD_AUTH_TAG}#egg=taiga-contrib-threefold-auth-official&subdirectory=back"
 ```
-export TAIGA_CONTRIB_THREEFOLD_AUTH_TAG=1.1.0
+
+Modify `settings/config.py`:
+
+```python
+INSTALLED_APPS += ["taiga_contrib_threefold_auth"]
+THREEFOLD_API_APP_SECRET = "YOUR-APP-SECRET"
+THREEFOLD_URL = "https://login.threefold.me"
+THREEFOLD_OPENKYC_URL = "https://openkyc.threefold.me/verification/verify-sei"
 ```
+
+#### Taiga Front
+
+Download the compiled plugin into `dist/plugins/`:
+
+```bash
+cd dist/
+mkdir -p plugins
+cd plugins
+svn export "https://github.com/sameh-farouk/taiga-contrib-threefold-auth.git/tags/${TAIGA_CONTRIB_THREEFOLD_AUTH_TAG}/front/dist" "threefold-auth"
+```
+
+Add to `dist/conf.json`:
+
+```json
+{
+  "threeFoldAppPubKey": "YOUR-APP-PUBLIC-KEY",
+  "threeFoldAppId": "YOUR-APP-ID",
+  "threeFoldUrl": "https://login.threefold.me",
+  "contribPlugins": [
+    "plugins/threefold-auth/threefold-auth.json"
+  ]
+}
+```
+
+## Development Setup
 
 ### Taiga Back
 
-Load the python virtualenv from your Taiga back directory:
-
 ```bash
-source .venv/bin/activate
+cd taiga-contrib-threefold-auth/back
+workon taiga
+pip install -e .
 ```
 
-And install the package `taiga-contrib-threefold-auth-official` with:
-
-```bash
-  (taiga-back) pip install "git+https://github.com/sameh-farouk/taiga-contrib-threefold-auth.git@${TAIGA_CONTRIB_THREEFOLD_AUTH_TAG}#egg=taiga-contrib-threefold-auth-official&subdirectory=back"
-```
-
-Modify your `settings/config.py` and include the line:
-
-```python
-  INSTALLED_APPS += ["taiga_contrib_threefold_auth"]
-
-  THREEFOLD_API_APP_SECRET = "YOUR-THREEFOLD-APP-SECRET"  # required
-  THREEFOLD_URL = "https://login.threefold.me"  # optional. can be used to override the default url
-  THREEFOLD_OPENKYC_URL ="https://openkyc.threefold.me/verification/verify-sei"  # optional. can be used to override the default url
-```
-
-To get the THREEFOLD_API_APP_SECRET do:
-
-```python
-import nacl
-import nacl.signing
-sk = nacl.signing.SigningKey.generate()
-sk_to_b64 = sk.encode(encoder=nacl.encoding.Base64Encoder).decode()  # this is the signing key. use it for THREEFOLD_API_APP_SECRET setting.
-
-vk = sk.verify_key
-pubkey = vk.to_curve25519_public_key().encode(encoder=nacl.encoding.Base64Encoder).decode()  # this is the app public key. you will need it for the front end `threeFoldAppPubKey` setting.
-``` 
-**Tip** the callback url in the Threefold configuration should be the same as the `{TAIGA_URL}/login` environment variable.
-
+Update `taiga-back/settings/local.py` with the same settings as production.
 
 ### Taiga Front
 
-Download in your `dist/plugins/` directory of Taiga front the `taiga-contrib-threefold-auth` compiled code (you need subversion in your system):
-
 ```bash
-  cd dist/
-  mkdir -p plugins
-  cd plugins
-  svn export "https://github.com/sameh-farouk/taiga-contrib-threefold-auth.gi/tags/${TAIGA_CONTRIB_THREEFOLD_AUTH_TAG}/front/dist"  "threefold-auth"
+cd taiga-front/dist
+mkdir -p plugins
+cd plugins
+ln -s ../../../taiga-contrib-threefold-auth/front/dist threefold-auth
 ```
 
-Include in your `dist/conf.json` in the 'contribPlugins' list the value `"plugins/threefold-auth/threefold-auth.json"`:
-
-```json
-...
-  "threeFoldAppPubKey": "YOUR-THREEFOLD-APP-PUBLIC-KEY",  // required 
-  "threeFoldAppId": "YOUR-THREEFOLD-APP-ID",  // optional, use your hostname ex. circles.threefold.me 
-  "threeFoldUrl": "https://login.threefold.me", // optional, can be used to override the default url
-  "contribPlugins": [
-    (...)
-    "plugins/threefold-auth/threefold-auth.json"
-  ]
-...
-```
-
-## Dev env
-
-This configuration should be used only if you're developing this library.
-
-### Taiga Back
-
-Clone the repo and
-
-```bash
-  cd taiga-contrib-threefold-auth/back
-  workon taiga
-  pip install -e .
-```
-
-Modify `taiga-back/settings/local.py` and include the line:
-
-```python
-  INSTALLED_APPS += ["taiga_contrib_threefold_auth"]
-
-  THREEFOLD_API_APP_SECRET = "YOUR-THREEFOLD-APP-SECRET"  # required
-  THREEFOLD_URL = "https://login.threefold.me"  # optional. can be used to override the default url
-  THREEFOLD_OPENKYC_URL ="https://openkyc.threefold.me/verification/verify-sei"  # optional. can be used to override the default url
-```
-
-To get the THREEFOLD_API_APP_SECRET do:
-
-```python
-import nacl
-import nacl.signing
-sk = nacl.signing.SigningKey.generate()
-sk_to_b64 = sk.encode(encoder=nacl.encoding.Base64Encoder).decode()  # this is the signing key. use it for THREEFOLD_API_APP_SECRET setting.
-
-vk = sk.verify_key
-pubkey = vk.to_curve25519_public_key().encode(encoder=nacl.encoding.Base64Encoder).decode()  # this is the app public key. you will need it for the front end `threeFoldAppPubKey` setting.
-
-``` 
-
-### Taiga Front
-
-After clone the repo link `dist` in `taiga-front` plugins directory:
-
-```bash
-  cd taiga-front/dist
-  mkdir -p plugins
-  cd plugins
-  ln -s ../../../taiga-contrib-threefold-auth/front/dist threefold-auth
-```
-
-Include in your `dist/conf.json` in the 'contribPlugins' list the value `"plugins/threefold-auth/threefold-auth.json"`:
-
-```json
-...
-  "threeFoldAppPubKey": "YOUR-THREEFOLD-APP-PUBLIC-KEY",  // required 
-  "threeFoldAppId": "YOUR-THREEFOLD-APP-ID",  // optional, use your hostname ex. circles.threefold.me 
-  "threeFoldUrl": "https://login.threefold.me", // optional, can be used to override the default url
-  "contribPlugins": [
-    (...)
-    "plugins/threefold-auth/threefold-auth.json"
-  ]
-...
-```
-
-In the plugin source dir `taiga-contrib-threefold-auth/front` run
+Add the plugin to `dist/conf.json` as shown above, then in the plugin source directory:
 
 ```bash
 npm install
+gulp       # regenerate and watch
+gulp build # regenerate only
 ```
-and use:
 
-- `gulp` to regenerate the source and watch for changes.
-- `gulp build` to only regenerate the source.
+## Disable default login and registration
 
-## Running tests
-
-not yet
-
-## disable the normal login and registeration:
-If you like to keep only Threefold login and registration and disable the default login and the public registration, include in your `dist/conf.json` these values
+To keep only the SSO login and disable the default login and public registration, add to `dist/conf.json`:
 
 ```json
+{
   "defaultLoginEnabled": false,
-  "publicRegisterEnabled": false,
+  "publicRegisterEnabled": false
+}
 ```
 
 ## Taiga Documentation
 
-Currently, we have authored three main documentation hubs:
-
-- **[API](https://docs.taiga.io/api.html)**: Our API documentation and reference for developing from Taiga API.
-- **[Documentation](https://docs.taiga.io/)**: If you need to install Taiga on your own server, this is the place to find some guides.
-- **[Taiga Resources](https://resources.taiga.io)**: This page is intended to be the support reference page for the users.
+- **[API](https://docs.taiga.io/api.html)**: API documentation and reference.
+- **[Documentation](https://docs.taiga.io/)**: Installation and configuration guides.
+- **[Taiga Resources](https://resources.taiga.io)**: Support reference for users.
 
 ## Contributions
-My thanks to all the people who have added to the plugin
-The whole taiga team who wrote the github plugin that this plugin is based off.
+
+Thanks to all contributors and the Taiga team, whose GitLab plugin served as the foundation for this work.
 
 ## License
 

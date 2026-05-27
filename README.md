@@ -1,6 +1,6 @@
-Taiga contrib threefold auth
-=========================
-The Taiga plugin for threefold authentication (Ported from official Gitlab auth).
+# Taiga Contrib Threefold Auth
+
+A Taiga plugin that enables ThreeFold authentication, ported from the official GitLab auth plugin. It allows users to log in to Taiga using their ThreeFold identity.
 
 to install it, you can use one of three ways:
 - Using taiga helm chart
@@ -328,3 +328,8 @@ Currently, we have authored three main documentation hubs:
 ## Contributions
 My thanks to all the people who have added to the plugin
 The whole taiga team who wrote the github plugin that this plugin is based off.
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+Copyright (c) TFTech NV.

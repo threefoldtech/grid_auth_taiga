@@ -1,4 +1,4 @@
-# Taiga Contrib ThreeFold Auth
+# Grid Auth Taiga
 
 This repository contains an authentication plugin for the [Taiga](https://taiga.io) project management platform that enables single sign-on through a blockchain-based identity system. It is ported from the official GitLab auth plugin and adapted for decentralized authentication flows.
 
